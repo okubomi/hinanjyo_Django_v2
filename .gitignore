@@ -1,0 +1,43 @@
+# --- 仮想環境 (Virtual Environments) ---
+# ご指定のフォルダ名を追加
+.venv/
+venv/
+env/
+ENV/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# --- Django ---
+# ローカルDB（基本はマイグレーションで共有するため除外）
+db.sqlite3
+db.sqlite3-journal
+
+# ログファイル
+*.log
+
+# 静的ファイルの集約先 (collectstatic用)
+staticfiles/
+static_root/
+
+# メディアファイルのアップロード先
+media/
+
+# --- 環境変数・機密情報 ---
+.env
+local_settings.py
+secrets.json
+
+# --- エディタ / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 自作バッチファイル
+django_make2.bat
+django_makeVenv_install.bat

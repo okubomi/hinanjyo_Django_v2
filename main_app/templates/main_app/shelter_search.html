@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    {% load static %}
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東京避難所検索</title>
+
+    <!-- PWA 用 -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <link rel="apple-touch-icon" href="{% static 'icon-192.png' %}">
+
+    <link rel="icon" href="{% static 'icon-192.png' %}" type="image/png">
+
+    <!-- 外部CSS -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+
+    <!-- オフライン・オンライン時の、避難所データ読み込みワーカーの登録 -->
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/service-worker.js")
+                .then(() => console.log("Service Worker registered"))
+                .catch(err => console.log("SW registration failed:", err));
+        }
+    </script>
+
+
+    <title>東京避難所検索</title>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>東京避難所検索</h2>
+        <input type="text" id="searchInput" placeholder="施設名や住所で検索..." onkeyup="doSearch()">
+        <p id="info"></p>
+        <div id="resultList"></div>
+    </div>
+
+    <script>
+        // 1. Djangoから渡されたJSONをキャッシュ
+        // Django から渡された JSON
+        const shelterData = {{ shelter_json| safe }};
+
+        // 初回のみ保存
+        if (!localStorage.getItem("shelters")) {
+            localStorage.setItem("shelters", JSON.stringify(shelterData));
+            console.log("ローカルに避難所データを保存しました");
+        }
+
+        // LocalStorage から読み込む
+        allShelters = JSON.parse(localStorage.getItem("shelters") || "[]");
+
+        function doSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const container = document.getElementById('resultList');
+            const info = document.getElementById('info');
+
+            container.innerHTML = '';
+
+            // フィルタリング
+            const filtered = allShelters.filter(s =>
+                s.name.toLowerCase().includes(query) || s.address.toLowerCase().includes(query)
+            );
+
+            console.log("検索結果の件数：" + filtered.length);
+
+            // 表示（件数が多いと重いので上位50件に制限）
+            filtered.slice(0, 50).forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                // Googleマップへのリンクを作成
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lon}`;
+
+                div.innerHTML = `
+                <div class="name">${s.name}</div>
+                <div class="address">${s.address}</div>
+                <a href="${mapUrl}" target="_blank" class="map-btn">地図を表示</a>
+            `;
+                container.appendChild(div);
+            });
+
+            info.innerText = `該当: ${filtered.length}件`;
+        }
+
+        // 初回表示
+        doSearch();
+    </script>
+
+</body>
+
+</html>
